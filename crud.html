@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD Application</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { margin: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+
+<h2>CRUD Application</h2>
+<input type="text" id="name" placeholder="Name">
+<input type="email" id="email" placeholder="Email">
+<button onclick="addRecord()">Add</button>
+
+<table id="recordTable">
+  <thead>
+    <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let records = JSON.parse(localStorage.getItem('records')) || [];
+
+function renderTable() {
+  const table = document.querySelector('#recordTable tbody');
+  table.innerHTML = '';
+  records.forEach((rec, index) => {
+    table.innerHTML += `
+      <tr>
+        <td>${rec.name}</td>
+        <td>${rec.email}</td>
+        <td>
+          <button onclick="editRecord(${index})">Edit</button>
+          <button onclick="deleteRecord(${index})">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function addRecord() {
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  if (name && email) {
+    records.push({ name, email });
+    localStorage.setItem('records', JSON.stringify(records));
+    renderTable();
+    document.getElementById('name').value = '';
+    document.getElementById('email').value = '';
+  }
+}
+
+function deleteRecord(index) {
+  records.splice(index, 1);
+  localStorage.setItem('records', JSON.stringify(records));
+  renderTable();
+}
+
+function editRecord(index) {
+  const rec = records[index];
+  document.getElementById('name').value = rec.name;
+  document.getElementById('email').value = rec.email;
+  records.splice(index, 1);
+  localStorage.setItem('records', JSON.stringify(records));
+  renderTable();
+}
+
+renderTable();
+</script>
+
+</body>
+</html>
+
+
+crud-app/
+├── db.php
+├── index.php
+├── insert.php
+├── update.php
+├── delete.php
+
+<?php
+$conn = new mysqli("localhost", "root", "", "crud_db");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+?>
+
+
+<?php include 'db.php'; ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CRUD App</title>
+</head>
+<body>
+    <h2>Add Record</h2>
+    <form method="POST" action="insert.php">
+        Name: <input type="text" name="name" required>
+        Email: <input type="email" name="email" required>
+        <button type="submit">Add</button>
+    </form>
+
+    <h2>Records</h2>
+    <table border="1" cellpadding="5">
+        <tr><th>ID</th><th>Name</th><th>Email</th><th>Actions</th></tr>
+        <?php
+        $result = $conn->query("SELECT * FROM users");
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr>
+                <td>{$row['id']}</td><td>{$row['name']}</td><td>{$row['email']}</td>
+                <td>
+                    <a href='update.php?id={$row['id']}'>Edit</a> | 
+                    <a href='delete.php?id={$row['id']}'>Delete</a>
+                </td>
+            </tr>";
+        }
+        ?>
+    </table>
+</body>
+</html>
+
+<?php
+include 'db.php';
+$name = $_POST['name'];
+$email = $_POST['email'];
+$conn->query("INSERT INTO users (name, email) VALUES ('$name', '$email')");
+header("Location: index.php");
+?>
+
+<?php
+include 'db.php';
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $result = $conn->query("SELECT * FROM users WHERE id=$id");
+    $row = $result->fetch_assoc();
+}
+if (isset($_POST['update'])) {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$id");
+    header("Location: index.php");
+}
+?>
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Update Record</h2>
+<form method="POST">
+    Name: <input type="text" name="name" value="<?= $row['name'] ?>" required>
+    Email: <input type="email" name="email" value="<?= $row['email'] ?>" required>
+    <button name="update">Update</button>
+</form>
+</body>
+</html>
+
+<?php
+include 'db.php';
+$id = $_GET['id'];
+$conn->query("DELETE FROM users WHERE id=$id");
+header("Location: index.php");
+?>
+
+CREATE DATABASE crud_db;
+USE crud_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
+
+CREATE DATABASE crud_db;
+USE crud_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
+
+<?php
+include 'db.php';
+$name = $_POST['name'];
+$email = $_POST['email'];
+$conn->query("INSERT INTO users (name, email) VALUES ('$name', '$email')");
+header("Location: index.php");
+?>
